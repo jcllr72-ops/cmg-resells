@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMG RESELLS — Card Inventory</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#e53935;--accent2:#b91c1c;--green:#138a52;--shadow:0 8px 25px rgba(20,30,50,.08)}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+header{background:#151922;color:white;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.logo{font-weight:900;font-size:21px}.logo span{color:#ffcb05}.tag{font-size:12px;color:#b8bfcc}
+nav{background:#fff;border-bottom:1px solid var(--line);padding:0 24px;display:flex;gap:8px;position:sticky;top:67px;z-index:9}
+nav button{border:0;background:none;padding:15px 16px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent}
+nav button.active{color:var(--accent);border-bottom-color:var(--accent)}
+main{max-width:1250px;margin:26px auto;padding:0 20px}.view{display:none}.view.active{display:block}
+h1{margin:0 0 5px;font-size:28px}.sub{color:var(--muted);margin-bottom:22px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.stat{background:var(--card);padding:20px;border-radius:16px;box-shadow:var(--shadow);border:1px solid var(--line)}.stat .label{color:var(--muted);font-size:13px}.stat .value{font-size:26px;font-weight:850;margin-top:8px}.green{color:var(--green)}.red{color:var(--accent)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:20px;margin-top:20px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:15px}input,select{border:1px solid #d6dae3;border-radius:10px;padding:11px 12px;background:white;font:inherit;min-width:150px}input.search{flex:1;min-width:220px}
+button.primary,.primary{background:var(--accent);color:white;border:0;border-radius:10px;padding:11px 16px;font-weight:800;cursor:pointer}.primary:hover{background:var(--accent2)}
+button.secondary{background:#eef1f6;border:0;border-radius:10px;padding:11px 16px;font-weight:750;cursor:pointer}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:13px 10px;border-bottom:1px solid var(--line);font-size:14px}th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}td strong{font-weight:800}.pill{padding:5px 8px;border-radius:99px;background:#eef1f6;font-size:12px;font-weight:750}.pill.in{background:#e7f7ef;color:#147a4b}.pill.sold{background:#fbe8e8;color:#a51e1e}
+.actions button{border:0;background:#eef1f6;border-radius:8px;padding:7px 9px;margin-right:4px;cursor:pointer}.actions .sell{background:#e7f7ef;color:#147a4b}
+.empty{text-align:center;padding:45px;color:var(--muted)}
+.modal{display:none;position:fixed;inset:0;background:rgba(10,15,25,.55);z-index:30;align-items:center;justify-content:center;padding:20px}.modal.show{display:flex}.modalbox{background:white;border-radius:18px;padding:24px;max-width:650px;width:100%;max-height:90vh;overflow:auto}.modalhead{display:flex;justify-content:space-between;align-items:center}.close{border:0;background:#eef1f6;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:18px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:12px;font-weight:800;color:var(--muted)}.formactions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}table{display:block;overflow-x:auto;white-space:nowrap}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}}
+@media(max-width:520px){header{padding:15px}.grid{grid-template-columns:1fr 1fr}.stat .value{font-size:21px}nav{padding:0 8px;overflow:auto}nav button{padding:13px 10px}main{padding:0 12px}}
+.shutterwrap{display:none;justify-content:center;align-items:center;padding:15px 0 4px}.shutterwrap.active{display:flex}.shutter{width:74px;height:74px;border-radius:50%;background:#fff;border:5px solid #d8dde7;box-shadow:0 0 0 3px #fff,0 3px 14px #0005;cursor:pointer;flex:none}.shutter:disabled{opacity:.4;cursor:not-allowed}.shutter:active{transform:scale(.94)}.scanbox{max-width:720px}.scanvideo{width:100%;max-height:370px;object-fit:contain;background:#101827;border-radius:12px}.scanpreview{max-width:100%;max-height:260px;border-radius:10px;display:none;margin:10px auto}.scanresults{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-top:12px}.scanresult{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;text-align:left;cursor:pointer}.scanresult img{width:100%;height:155px;object-fit:contain}.scanresult strong{display:block}.scanresult small{color:var(--muted)}.scanstatus{color:var(--muted);margin:12px 0;white-space:pre-wrap}.scanbuttons{display:flex;gap:9px;flex-wrap:wrap}.scanbuttons button{flex:1;min-width:120px}
+</style>
+</head>
+<body>
+<header><div class="logo">⚡ CMG <span>RESELLS</span></div><div class="tag">Personal inventory system</div></header>
+<nav>
+<button class="tab active" data-view="dashboard">Dashboard</button>
+<button class="tab" data-view="inventory">Inventory</button>
+<button class="tab" data-view="sales">Sales</button><button class="tab" data-view="scanner">📷 Scan Card</button>
+</nav>
+
+<main>
+<section id="dashboard" class="view active">
+<h1>Dashboard</h1><div class="sub">Your Pokémon resale business at a glance.</div>
+<div class="grid">
+<div class="stat"><div class="label">Cards in Stock</div><div class="value" id="sQty">0</div></div>
+<div class="stat"><div class="label">Inventory Value</div><div class="value" id="sValue">$0.00</div></div>
+<div class="stat"><div class="label">Money Invested</div><div class="value" id="sCost">$0.00</div></div>
+<div class="stat"><div class="label">Potential Profit</div><div class="value green" id="sPotential">$0.00</div></div>
+</div>
+<div class="grid" style="margin-top:15px">
+<div class="stat"><div class="label">Total Sales</div><div class="value" id="sSales">$0.00</div></div>
+<div class="stat"><div class="label">Realized Profit</div><div class="value green" id="sProfit">$0.00</div></div>
+<div class="stat"><div class="label">Cards Sold</div><div class="value" id="sSold">0</div></div>
+<div class="stat"><div class="label">Average Profit / Sale</div><div class="value" id="sAvg">$0.00</div></div>
+</div>
+<div class="panel"><h2 style="margin-top:0">Recent Inventory</h2><div id="recent"></div></div>
+</section>
+
+<section id="inventory" class="view">
+<h1>Inventory</h1><div class="sub">Everything you currently own for resale.</div>
+<div class="panel">
+<div class="toolbar"><input class="search" id="search" placeholder="Search card, set, number..."><select id="conditionFilter"><option value="">All conditions</option><option>NM</option><option>LP</option><option>MP</option><option>HP</option><option>DMG</option></select><button class="primary" onclick="openAdd()">＋ Add Card</button></div>
+<div id="inventoryTable"></div>
+</div>
+</section>
+
+<section id="sales" class="view">
+<h1>Sales History</h1><div class="sub">Track what sold and how much you made.</div>
+<div class="panel"><div id="salesTable"></div></div>
+</section>
+<section id="scanner" class="view">
+<h1>Scan Pokémon Card</h1><div class="sub">Identify a card, verify the match, then add it to your inventory. No automatic prices.</div>
+<div class="panel scanbox"><div class="scanbuttons"><button class="primary" type="button" id="startCamera">📷 Start Live Camera</button><button class="secondary" type="button" id="stopCamera">Stop Camera</button></div>
+<video id="scanVideo" class="scanvideo" autoplay muted playsinline style="display:none;margin-top:12px"></video><div id="shutterWrap" class="shutterwrap"><button id="captureCard" class="shutter" type="button" disabled aria-label="Take picture and identify card" title="Take picture"></button></div>
+<div class="toolbar" style="margin-top:15px"><label for="photoUpload"><strong>Or upload a photo:</strong></label><input id="photoUpload" type="file" accept="image/*"></div>
+<img id="scanPreview" class="scanpreview" alt="Card being scanned"><canvas id="scanCanvas" hidden></canvas>
+<div id="scanStatus" class="scanstatus" role="status" aria-live="polite">Fill the photo with one card, straight-on and in good lighting. Confirm every match before saving.</div>
+<details style="margin:10px 0"><summary>What did the scanner read?</summary><pre id="scanDebug" style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px">No photo scanned yet.</pre></details><div id="scanMatches" class="scanresults"></div><p style="font-size:12px;color:var(--muted)">PriceCharting links open search results, not guaranteed exact matches or live prices inside this website. Verify the card before using a listed price.</p>
+<div style="margin-top:15px"><label for="manualSearch"><strong>Search by card name or number if the scan misses:</strong></label><div class="toolbar" style="margin-top:8px"><input id="manualSearch" class="search" placeholder="e.g. Charizard ex 199/165"><button class="secondary" type="button" id="manualLookup">Find Card</button></div></div>
+</div></section>
+</main>
+
+<div class="modal" id="cardModal"><div class="modalbox">
+<div class="modalhead"><h2 id="modalTitle">Add Card</h2><button class="close" onclick="closeModal()">×</button></div>
+<form id="cardForm"><input type="hidden" id="editId">
+<div class="formgrid">
+<div class="field"><label>Card Name *</label><input id="name" required placeholder="Charizard ex"></div>
+<div class="field"><label>Set</label><input id="set" placeholder="151"></div>
+<div class="field"><label>Card Number</label><input id="number" placeholder="199/165"></div>
+<div class="field"><label>Condition</label><select id="condition"><option>NM</option><option>LP</option><option>MP</option><option>HP</option><option>DMG</option></select></div>
+<div class="field"><label>Quantity *</label><input id="qty" type="number" min="1" value="1" required></div>
+<div class="field"><label>Purchase Price (per card)</label><input id="buy" type="number" min="0" step=".01" value="0"></div>
+<div class="field"><label>Current Value (per card)</label><input id="current" type="number" min="0" step=".01" value="0"></div>
+<div class="field"><label>Target Sell Price (per card)</label><input id="target" type="number" min="0" step=".01" value="0"></div>
+<div class="field"><label>Purchase Date</label><input id="date" type="date"></div>
+<div class="field"><label>Where Bought</label><input id="source" placeholder="Local, eBay, shop..."></div>
+<div class="field full"><label>Notes</label><input id="notes" placeholder="Binder page, condition notes, etc."></div>
+</div>
+<div class="formactions" style="flex-wrap:wrap;align-items:center"><a id="priceChartingLink" href="https://www.pricecharting.com/" target="_blank" rel="noopener noreferrer" class="secondary" style="display:inline-block;text-decoration:none;color:#172033;background:#eef1f6;border-radius:10px;padding:11px 16px;font-weight:750">🔎 Check PriceCharting</a><button type="button" class="secondary" onclick="closeModal()">Cancel</button><button class="primary">Save Card</button></div>
+</form></div></div>
+
+<div class="modal" id="sellModal"><div class="modalbox">
+<div class="modalhead"><h2>Mark Card Sold</h2><button class="close" onclick="closeSell()">×</button></div>
+<form id="sellForm"><input type="hidden" id="sellId">
+<p id="sellInfo" style="color:#6b7280"></p>
+<div class="formgrid">
+<div class="field"><label>Quantity Sold</label><input id="sellQty" type="number" min="1" value="1"></div>
+<div class="field"><label>Sold Price (per card)</label><input id="sellPrice" type="number" min="0" step=".01" value="0"></div>
+<div class="field"><label>Fees</label><input id="fees" type="number" min="0" step=".01" value="0"></div>
+<div class="field"><label>Shipping Cost</label><input id="shipping" type="number" min="0" step=".01" value="0"></div>
+<div class="field"><label>Platform</label><select id="platform"><option>eBay</option><option>TCGPlayer</option><option>Local</option><option>Facebook Marketplace</option><option>Other</option></select></div>
+<div class="field"><label>Sale Date</label><input id="saleDate" type="date"></div>
+</div>
+<div class="formactions"><button type="button" class="secondary" onclick="closeSell()">Cancel</button><button class="primary">Record Sale</button></div>
+</form></div></div>
+
+<script>
+const KEY='pokeresell_v1';
+let db;
+try { db=JSON.parse(localStorage.getItem(KEY)||'{"cards":[],"sales":[]}'); }
+catch(e){ db={cards:[],sales:[]}; }
+if(!db || !Array.isArray(db.cards) || !Array.isArray(db.sales)) db={cards:[],sales:[]};
+const $=id=>document.getElementById(id);
+const money=n=>'$'+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function save(){
+  try { localStorage.setItem(KEY,JSON.stringify(db)); }
+  catch(e){ alert('Your browser blocked local storage. Please open this site normally (not Private Browsing) and try again.'); return false; }
+  renderAll(); return true;
+}
+function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.view).classList.add('active')});
+function renderAll(){renderDashboard();renderInventory();renderSales()}
+function renderDashboard(){
+ const stock=db.cards.reduce((a,c)=>a+Number(c.qty),0), value=db.cards.reduce((a,c)=>a+Number(c.qty)*Number(c.current),0), cost=db.cards.reduce((a,c)=>a+Number(c.qty)*Number(c.buy),0), target=db.cards.reduce((a,c)=>a+Number(c.qty)*Number(c.target),0);
+ const sales=db.sales.reduce((a,x)=>a+Number(x.total),0), profit=db.sales.reduce((a,x)=>a+Number(x.profit),0), sold=db.sales.reduce((a,x)=>a+Number(x.qty),0);
+ $('sQty').textContent=stock;$('sValue').textContent=money(value);$('sCost').textContent=money(cost);$('sPotential').textContent=money(target-cost);$('sSales').textContent=money(sales);$('sProfit').textContent=money(profit);$('sSold').textContent=sold;$('sAvg').textContent=money(sold?profit/sold:0);
+ const recent=db.cards.slice().reverse().slice(0,6); const recentEl=recent.map(c=>`<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)"><div><strong>${esc(c.name)}</strong><div style="font-size:12px;color:#6b7280">${esc(c.set||'No set')} • ${esc(c.condition)}</div></div><div><strong>${money(c.current)}</strong><div style="font-size:12px;color:#6b7280">${c.qty} in stock</div></div></div>`).join('');$('recent').innerHTML=recentEl||'<div class="empty">No cards yet. Add your first card from Inventory.</div>';
+}
+function renderInventory(){
+ let q=($('search')?.value||'').toLowerCase(), cond=$('conditionFilter')?.value||'';
+ let rows=db.cards.filter(c=>(!q||[c.name,c.set,c.number].join(' ').toLowerCase().includes(q))&&(!cond||c.condition===cond));
+ if(!rows.length){$('inventoryTable').innerHTML='<div class="empty">No cards found.</div>';return}
+ $('inventoryTable').innerHTML=`<table><thead><tr><th>Card</th><th>Condition</th><th>Qty</th><th>Buy</th><th>Current</th><th>Target</th><th>Potential Profit</th><th>Actions</th></tr></thead><tbody>${rows.map(c=>`<tr><td><strong>${esc(c.name)}</strong><br><small>${esc(c.set||'')}${c.number?' • '+esc(c.number):''}</small></td><td><span class="pill in">${esc(c.condition)}</span></td><td>${c.qty}</td><td>${money(c.buy)}</td><td>${money(c.current)}</td><td>${money(c.target)}</td><td class="green">${money((c.target-c.buy)*c.qty)}</td><td class="actions"><button class="sell" onclick="openSell('${c.id}')">Sell</button><button onclick="editCard('${c.id}')">Edit</button><button onclick="deleteCard('${c.id}')">Delete</button></td></tr>`).join('')}</tbody></table>`;
+}
+function renderSales(){
+ if(!db.sales.length){$('salesTable').innerHTML='<div class="empty">No sales recorded yet.</div>';return}
+ $('salesTable').innerHTML=`<table><thead><tr><th>Date</th><th>Card</th><th>Qty</th><th>Revenue</th><th>Fees + Ship</th><th>Profit</th><th>Platform</th></tr></thead><tbody>${db.sales.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td><strong>${esc(x.name)}</strong></td><td>${x.qty}</td><td>${money(x.total)}</td><td>${money(x.fees+x.shipping)}</td><td class="green">${money(x.profit)}</td><td><span class="pill sold">${esc(x.platform)}</span></td></tr>`).join('')}</tbody></table>`;
+}
+$('search').oninput=renderInventory;$('conditionFilter').onchange=renderInventory;
+function openAdd(){$('cardForm').reset();$('editId').value='';$('qty').value=1;$('condition').value='NM';$('date').value=new Date().toISOString().slice(0,10);$('modalTitle').textContent='Add Card';refreshPriceChartingLink();$('cardModal').classList.add('show')}
+function editCard(i){let c=db.cards.find(x=>x.id===i);if(!c)return;$('editId').value=c.id;$('name').value=c.name;$('set').value=c.set;$('number').value=c.number;$('condition').value=c.condition;$('qty').value=c.qty;$('buy').value=c.buy;$('current').value=c.current;$('target').value=c.target;$('date').value=c.date;$('source').value=c.source;$('notes').value=c.notes;$('modalTitle').textContent='Edit Card';refreshPriceChartingLink();$('cardModal').classList.add('show')}
+function priceChartingUrl(name,set,number){
+ const query=[name,set,number].filter(Boolean).join(' ').trim();
+ return 'https://www.pricecharting.com/search-products?type=prices&q='+encodeURIComponent(query);
+}
+function refreshPriceChartingLink(){
+ const link=$('priceChartingLink');if(!link)return;
+ link.href=priceChartingUrl($('name').value.trim(),$('set').value.trim(),$('number').value.trim());
+ link.title='Search PriceCharting for this card. Verify the matching version and condition.';
+}
+['name','set','number'].forEach(k=>$(k).addEventListener('input',refreshPriceChartingLink));
+$('cardModal').addEventListener('click',e=>{if(e.target.closest('#priceChartingLink'))refreshPriceChartingLink()});
+function closeModal(){$('cardModal').classList.remove('show')}
+$('cardForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const name=$('name').value.trim(); if(!name){$('name').focus();return;}
+ let data={id:$('editId').value||id(),name,set:$('set').value.trim(),number:$('number').value.trim(),condition:$('condition').value,qty:Math.max(1,Number($('qty').value)||1),buy:Number($('buy').value)||0,current:Number($('current').value)||0,target:Number($('target').value)||0,date:$('date').value,source:$('source').value.trim(),notes:$('notes').value.trim()};
+ let idx=db.cards.findIndex(x=>x.id===data.id);if(idx>=0)db.cards[idx]=data;else db.cards.push(data);
+ if(save()) closeModal();
+});
+function deleteCard(i){if(confirm('Delete this card from inventory?')){db.cards=db.cards.filter(x=>x.id!==i);save()}}
+function openSell(i){let c=db.cards.find(x=>x.id===i);if(!c)return;$('sellId').value=i;$('sellQty').value=1;$('sellQty').max=c.qty;$('sellPrice').value=c.target||c.current;$('fees').value=0;$('shipping').value=0;$('saleDate').value=new Date().toISOString().slice(0,10);$('sellInfo').textContent=`${c.name} — ${c.qty} available • Cost basis ${money(c.buy)} per card`;$('sellModal').classList.add('show')}
+function closeSell(){$('sellModal').classList.remove('show')}
+$('sellForm').addEventListener('submit',e=>{e.preventDefault();let c=db.cards.find(x=>x.id===$('sellId').value);if(!c)return;let q=Math.min(Math.max(1,Number($('sellQty').value)||1),c.qty),price=Number($('sellPrice').value)||0,f=Number($('fees').value)||0,sh=Number($('shipping').value)||0,total=q*price,profit=total-f-sh-q*c.buy;db.sales.push({id:id(),cardId:c.id,name:c.name,qty:q,price,total,fees:f,shipping:sh,profit,platform:$('platform').value,date:$('saleDate').value});c.qty-=q;if(c.qty<=0)db.cards=db.cards.filter(x=>x.id!==c.id);if(save())closeSell()});
+renderAll();
+
+// Scanner extension: camera/photo OCR + Pokémon TCG catalog search. Inventory remains stored locally.
+let scanStream=null, scanBusy=false;
+const scanVideo=$('scanVideo'), scanStatus=$('scanStatus'), scanMatches=$('scanMatches');
+function scanMessage(msg){scanStatus.textContent=msg}
+function stopScanCamera(){if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}scanVideo.srcObject=null;scanVideo.style.display='none';$('shutterWrap').classList.remove('active');$('captureCard').disabled=true}
+$('startCamera').onclick=async()=>{
+ try{stopScanCamera();if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access requires HTTPS and a supported browser.');scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});scanVideo.srcObject=scanStream;scanVideo.style.display='block';await scanVideo.play();$('shutterWrap').classList.add('active');$('captureCard').disabled=false;scanMessage('Camera ready. Hold a card steady, then tap Capture & Identify.');}
+ catch(e){stopScanCamera();scanMessage('Could not open camera: '+e.message+' You can upload a photo instead.')}
+};
+$('stopCamera').onclick=()=>{stopScanCamera();scanMessage('Camera stopped.')};
+$('captureCard').onclick=async()=>{if(!scanStream||!scanVideo.videoWidth)return;const c=$('scanCanvas');c.width=scanVideo.videoWidth;c.height=scanVideo.videoHeight;c.getContext('2d').drawImage(scanVideo,0,0);stopScanCamera();await identifyPhoto(c.toDataURL('image/jpeg',.92))};
+$('photoUpload').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith('image/')){scanMessage('Please select an image file.');return}stopScanCamera();const r=new FileReader();r.onload=()=>identifyPhoto(r.result);r.readAsDataURL(f)};
+let ocrLoader=null, ocrWorker=null;
+function loadOCR(){if(window.Tesseract)return Promise.resolve();if(ocrLoader)return ocrLoader;ocrLoader=new Promise((resolve,reject)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';sc.onload=resolve;sc.onerror=()=>reject(Error('Text reader failed to load. Check internet.'));document.head.appendChild(sc)}).catch(e=>{ocrLoader=null;throw e});return ocrLoader}
+async function readOCR(image){await loadOCR();if(!ocrWorker)ocrWorker=await Tesseract.createWorker('eng');return (await ocrWorker.recognize(image)).data.text||''}
+function cardNumber(t){let m=String(t||'').match(/\b([A-Z]{0,3}\s*\d{1,3}[a-z]?)\s*[/|\\]\s*(?:[A-Z]{0,3}\s*\d{1,3})\b/i);return m?m[1].replace(/\s/g,'').toUpperCase():null}
+function getNames(text){const blocked=/^(basic|stage|pokemon|pokémon|trainer|supporter|ability|weakness|resistance|retreat|illustrator|energy|damage|evolves|hp|rule|attack|item|rarity|©)/i;return [...new Set(String(text||'').split(/\n/).map(x=>x.replace(/[©®™•|]/g,' ').replace(/\b\d{2,3}\s*HP\b/gi,'').replace(/\s+/g,' ').trim()).filter(x=>x.length>=3&&x.length<=42&&!blocked.test(x)&&!(/\d{2,}/.test(x))).map(x=>x.replace(/[^\p{L}\s'.-]/gu,'').trim()).filter(x=>x.length>=3&&x.split(' ').length<=5))].slice(0,5)}
+async function cropRegion(img,rect){let c=document.createElement('canvas');c.width=Math.min(1600,Math.max(1,Math.floor(img.naturalWidth*rect[2]*2)));c.height=Math.min(600,Math.max(1,Math.floor(img.naturalHeight*rect[3]*2)));let ctx=c.getContext('2d');ctx.filter='grayscale(1) contrast(1.6)';ctx.drawImage(img,img.naturalWidth*rect[0],img.naturalHeight*rect[1],img.naturalWidth*rect[2],img.naturalHeight*rect[3],0,0,c.width,c.height);return c}
+function loadImage(src,cross=false){return new Promise((resolve,reject)=>{const im=new Image();if(cross)im.crossOrigin='anonymous';im.onload=()=>resolve(im);im.onerror=()=>reject(Error('Image unavailable'));im.src=src})}
+// Lightweight visual comparison, not a trained AI model. Works best on straight-on, tightly cropped photos.
+function fingerprint(im){const c=document.createElement('canvas');c.width=12;c.height=12;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(im,0,0,c.width,c.height);let data=ctx.getImageData(0,0,12,12).data;const out=[];for(let y=2;y<9;y++)for(let x=2;x<10;x++){let i=(y*12+x)*4;out.push(data[i],data[i+1],data[i+2])}return out}
+function visualScore(a,b){if(!a||!b)return null;let sum=0;for(let i=0;i<a.length;i++)sum+=Math.abs(a[i]-b[i]);return Math.max(0,1-sum/(a.length*255))}
+let photoFingerprint=null;
+async function identifyPhoto(src){
+ if(scanBusy)return;scanBusy=true;scanMatches.replaceChildren();$('scanPreview').src=src;$('scanPreview').style.display='block';photoFingerprint=null;
+ try{
+  scanMessage('Reading photo locally…');const img=await loadImage(src);try{photoFingerprint=fingerprint(img)}catch(e){}
+  // OCR the top band first: attacks and card rules are not Pokémon names.
+  const top=await readOCR(await cropRegion(img,[0,0,1,.26]));
+  const bottom=await readOCR(await cropRegion(img,[0,.72,1,.28]));
+  const names=getNames(top);const num=cardNumber(bottom);
+  $('scanDebug').textContent='Scanner read — top: '+(top.trim()||'(nothing)')+' | bottom: '+(bottom.trim()||'(nothing)');
+  if(!names.length&&!num){scanMessage('Could not read a name or card number. Crop the photo tightly to the card, or search below.');return}
+  scanMessage('Searching for matches…');await lookupCards({number:num,names,text:top+'\n'+bottom,photo:true});
+ }catch(e){scanMessage('Photo scan error: '+e.message+'. You can still search by name below.')}
+ finally{scanBusy=false}
+}
+async function fetchCards(q){const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),10000);try{const res=await fetch('https://api.pokemontcg.io/v2/cards?q='+encodeURIComponent(q)+'&pageSize=70&select=id,name,number,set,images,supertype',{signal:ctrl.signal});if(!res.ok)throw Error('Pokémon card database returned HTTP '+res.status);return (await res.json()).data||[]}finally{clearTimeout(timer)}}
+function normalized(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'')}
+function matchScore(c,number,names){let n=normalized(c.name),points=0;for(const name of names){let t=normalized(name);if(t===n)points=Math.max(points,85);else if(t.length>=5&&(n.includes(t)||t.includes(n)))points=Math.max(points,42)}if(number&&normalized(c.number)===normalized(number))points+=65;return points}
+async function lookupCards({number=null,text='',names=[],manual=false,photo=false}={}){
+ scanMatches.replaceChildren();const term=text.trim();if(!term){scanMessage('Type a card name first.');return}
+ let queries=[];
+ if(manual){const clean=term.replace(/\b[A-Z]{0,3}\d{1,3}[a-z]?\s*\/\s*\d{1,3}\b/gi,'').trim();number=cardNumber(term);if(clean)queries.push('name:'+JSON.stringify(clean));if(number)queries.push('number:'+number);if(!clean&&!number)queries.push('name:'+term+'*')}
+ else{
+  // OCR can contain punctuation, attack text, and broken names. Never send those
+  // lines directly as quoted catalog queries: some trigger upstream HTTP 500.
+  const cleanNames=names.map(n=>String(n).replace(/[^\p{L}\p{N} '-]/gu,' ').replace(/\s+/g,' ').trim())
+    .filter(n=>n.length>=3 && n.length<=35);
+  const usefulWords=[...new Set(cleanNames.flatMap(n=>n.split(' ')).filter(w=>w.length>=5 && !/^(basic|stage|attack|damage|weakness|retreat|energy|trainer|pokemon|evolves|ability|rocket)$/i.test(w)))];
+  // A short wildcard name query is safer than quoting noisy OCR text.
+  for(const word of usefulWords.slice(0,3))queries.push('name:'+word+'*');
+  if(number && /^([A-Z]{0,3})?\d{1,3}[A-Z]?$/i.test(number))queries.push('number:'+number);
+ }
+ queries=[...new Set(queries)].slice(0,5);if(!queries.length){scanMessage('Could not find a usable name or number.');return}
+ let found=[],errors=[];
+ for(const q of queries){try{found.push(...await fetchCards(q));if(found.length>=120)break}catch(e){errors.push(e.message)}}
+ const unique=[...new Map(found.map(c=>[c.id,c])).values()];
+ if(!unique.length){scanMessage(errors.length ? 'Scanner database requests failed ('+errors[0]+'). Try a clearer photo or manual search below.' : 'No matches found. Try a clearer photo or manual search below.');$('scanDebug').textContent+='\nQueries attempted: '+queries.join(' | ')+'\nErrors: '+(errors.join(' | ')||'none');return}
+ // The catalog images may not permit cross-origin pixel access. If so, text-only matching remains available.
+ let visualCount=0;
+ if(photo&&photoFingerprint){await Promise.all(unique.slice(0,32).map(async c=>{try{const im=await loadImage(c.images?.small,true);c._visual=visualScore(photoFingerprint,fingerprint(im));visualCount++}catch(e){c._visual=null}}))}
+ const ranked=unique.map(c=>({c,score:matchScore(c,number,names),visual:c._visual??null})).sort((a,b)=>(b.score+(b.visual===null?0:b.visual*40))-(a.score+(a.visual===null?0:a.visual*40)));
+ const shown=photo?ranked.filter(r=>r.score>=40||(r.visual!==null&&r.visual>=.77)).slice(0,12):ranked.slice(0,24);
+ if(!shown.length){scanMessage('No confident match. Scanner did not find enough evidence; try searching the name manually.');return}
+ if(photo)$('scanDebug').textContent+='\nQueries attempted: '+queries.join(' | ')+'\nDatabase errors: '+(errors.join(' | ')||'none');
+ scanMessage((photo?'Possible matches (not verified): ':'Search results: ')+shown.length+' cards. Confirm artwork, set, and number before adding.'+(photo&&!visualCount?' Image comparison unavailable; matches are text-based.':''));
+ for(const {c,score,visual} of shown){const b=document.createElement('button');b.type='button';b.className='scanresult';const img=document.createElement('img');img.src=c.images?.small||'';img.alt=c.name;img.loading='lazy';const strong=document.createElement('strong');strong.textContent=c.name;const small=document.createElement('small');small.textContent=(c.set?.name||'Unknown set')+' • '+c.number+'/'+(c.set?.printedTotal||c.set?.total||'?')+(photo?' • '+(score>=85?'Text match':visual!==null?'Visual comparison':'Uncertain'):'');b.append(img,strong,small);b.onclick=()=>{openAdd();$('name').value=c.name;$('set').value=c.set?.name||'';$('number').value=c.number+'/'+(c.set?.printedTotal||c.set?.total||'?');$('modalTitle').textContent='Confirm & Add Card';refreshPriceChartingLink()};scanMatches.appendChild(b)}
+}
+$('manualLookup').onclick=async()=>{if(scanBusy){scanMessage('Please wait for the photo scan to finish.');return}scanBusy=true;scanMessage('Searching Pokémon card database…');try{await lookupCards({text:$('manualSearch').value,manual:true})}catch(e){scanMessage('Search error: '+e.message)}finally{scanBusy=false}};
+$('manualSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('manualLookup').click()}});
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.view!=='scanner')stopScanCamera()}));
+window.addEventListener('pagehide',stopScanCamera);
+</script>
+</body>
+</html>
